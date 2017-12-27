@@ -7,7 +7,7 @@ cabal-version:       >=1.10
 executable bad-socket
   hs-source-dirs:      app
   main-is:             Main.hs
-  ghc-options:         -Wall -threaded
+  ghc-options:         -Wall -threaded -rtsopts
   build-depends:       base
                      , bytestring
                      , network
