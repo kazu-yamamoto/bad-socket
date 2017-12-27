@@ -1,6 +1,6 @@
 module Main where
 
-import Control.Concurrent (forkIO)
+import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (void, forever)
 import Network.Socket hiding (recv)
 import Network.Socket.ByteString (recv)
@@ -15,13 +15,14 @@ main = do
         listenPort = "9876"
         connectPort = "6789"
     _ <- forkIO $ proxy host listenPort connectPort
+    threadDelay 10000
     client host listenPort
 
 client :: HostName -> ServiceName -> IO ()
 client host port = do
     s <- clientSocket host port
     forever $ do
-        sendAll s $ BL.fromStrict $ BS.pack $ replicate 5000 170
+        sendAll s $ BL.fromStrict $ BS.pack $ replicate 5000 120
         recv s 4096
 
 proxy :: HostName -> ServiceName -> ServiceName -> IO ()
@@ -45,6 +46,7 @@ serverSocket port = do
               }
     addr:_ <- getAddrInfo (Just hints) (Just "localhost") (Just port)
     sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+    setSocketOption sock ReuseAddr 1
     bind sock (addrAddress addr)
     listen sock 1
     fst <$> accept sock
