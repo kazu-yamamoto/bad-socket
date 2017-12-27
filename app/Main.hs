@@ -13,31 +13,30 @@ main = do
     let host = "localhost"
         listenPort = "9876"
         connectPort = "6789"
-    myserve host listenPort $ \client ->
-      myconnect host connectPort $ \server -> do
-        void $ forkIO $ proxy server client "s->c"
-        proxy client server "c->s"
+    fromClient <- myserve host listenPort
+    toServer <- myconnect host connectPort
+    void $ forkIO $ proxy toServer fromClient "s->c"
+    proxy fromClient toServer "c->s"
   where
-    proxy (s1, a1) (s2, a2) str = do
+    proxy s1 s2 str = forever $ do
       payload <- recv s1 4096
       putStrLn str
       sendAll s2 $ BL.fromStrict payload
-      proxy (s1, a1) (s2, a2) str
 
 myhints :: AddrInfo
 myhints = defaultHints { addrSocketType = Stream }
 
-myserve :: HostName -> ServiceName -> ((Socket, SockAddr) -> IO ()) -> IO ()
-myserve host port f = do
+myserve :: HostName -> ServiceName -> IO Socket
+myserve host port = do
   (addr:_) <- getAddrInfo (Just myhints) (Just host) (Just port)
   sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
   bind sock (addrAddress addr)
   listen sock 1
-  forever $ forkIO . f =<< accept sock
+  fst <$> accept sock
 
-myconnect :: HostName -> ServiceName -> ((Socket, SockAddr) -> IO ()) -> IO ()
-myconnect host port f = do
+myconnect :: HostName -> ServiceName -> IO Socket
+myconnect host port = do
   (addr:_) <- getAddrInfo (Just myhints) (Just host) (Just port)
   sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
   connect sock (addrAddress addr)
-  f (sock, addrAddress addr)
+  return sock
