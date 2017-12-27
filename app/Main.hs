@@ -4,10 +4,9 @@ import Control.Concurrent (forkIO)
 import Control.Monad (void, forever)
 import Network.Socket hiding (recv)
 import Network.Socket.ByteString (recv)
+import Network.Socket.ByteString.Lazy (sendAll)
 
 import qualified Data.ByteString.Lazy as BL
-
-import qualified TCP
 
 main :: IO ()
 main = do
@@ -21,7 +20,8 @@ main = do
   where
     proxy (s1, a1) (s2, a2) str = do
       payload <- recv s1 4096
-      TCP.sendAll s2 str $ BL.fromStrict payload
+      putStrLn str
+      sendAll s2 $ BL.fromStrict payload
       proxy (s1, a1) (s2, a2) str
 
 myhints :: AddrInfo

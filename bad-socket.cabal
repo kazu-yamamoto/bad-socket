@@ -7,7 +7,6 @@ cabal-version:       >=1.10
 executable bad-socket
   hs-source-dirs:      app
   main-is:             Main.hs
-  other-modules:       IOVec, TCP
   ghc-options:         -Wall -threaded
   build-depends:       base
                      , bytestring
