@@ -17,11 +17,12 @@ main = do
     toServer <- myconnect host connectPort
     void $ forkIO $ proxy toServer fromClient "s->c"
     proxy fromClient toServer "c->s"
-  where
-    proxy s1 s2 str = forever $ do
-      payload <- recv s1 4096
-      putStrLn str
-      sendAll s2 $ BL.fromStrict payload
+
+proxy :: Socket -> Socket -> String -> IO ()
+proxy s1 s2 str = forever $ do
+    payload <- recv s1 4096
+    putStrLn str
+    sendAll s2 $ BL.fromStrict payload
 
 myhints :: AddrInfo
 myhints = defaultHints { addrSocketType = Stream }
